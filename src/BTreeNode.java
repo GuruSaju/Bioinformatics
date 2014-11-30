@@ -3,6 +3,7 @@ public class BTreeNode<T extends Comparable<T>> {
 	public BTreeObject[] elements;
 	public BTreeNode<T>[] children;
 	public boolean leaf;
+	public int size;
 	
 	
 	public BTreeNode(int degree){
@@ -19,5 +20,17 @@ public class BTreeNode<T extends Comparable<T>> {
 		BTreeNode<T> bTreeNode  = (BTreeNode<T>) children[index];
 		return bTreeNode ;
 		}
-
+	public BTreeObject getElement(int index){
+		return this.elements[index];
+	}
+    public boolean leaf(){
+    	return leaf;
+    }
+    public void sizeset(int newsize){
+    	this.size=newsize;
+    	
+    }
+    public int getSize(){
+    	return this.size;
+    }
 }
