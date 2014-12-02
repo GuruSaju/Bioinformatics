@@ -6,18 +6,19 @@ public class SequenceTest {
 	private int failure;
 	private int total;
 	private ArrayList<String> failMessages;
-	
+
 	public static void main(String[] args) {
 		SequenceTest t = new SequenceTest();
-		if (args.length==0){
+		if (args.length == 0) {
 			t.runTests(10000);
-		}else{
+		} else {
 			t.runTests(Integer.parseInt(args[0]));
 		}
 	}
 
 	private void runTests(int tests) {
-		failMessages = new ArrayList<String>();		Sequence sequence = null;
+		failMessages = new ArrayList<String>();
+		Sequence sequence = null;
 		success = 0;
 		failure = 0;
 		total = 0;
@@ -65,7 +66,7 @@ public class SequenceTest {
 				test(str);
 			}
 		}
-		//Exhaustive test would take days to complete. 
+		// Exhaustive test would take days to complete.
 		// for (String s : base){
 		// for(String s2 : base){
 		// for(String s3 : base){
@@ -132,7 +133,7 @@ public class SequenceTest {
 		System.out.println("Total: " + total);
 		System.out.println("Success: " + success);
 		System.out.println("Failure: " + failure);
-		for(String m : failMessages){
+		for (String m : failMessages) {
 			System.out.println(m);
 		}
 	}
@@ -142,10 +143,11 @@ public class SequenceTest {
 		try {
 			Sequence s = new Sequence(seq);
 			if (s.toString().equals(seq)) {
-				 System.out.println("Passed: " + seq);
+				System.out.println("Passed: " + seq);
 				success++;
 			} else {
-				String message = "\nFAILED: " + seq + " Returned: "+ s.toString();
+				String message = "\nFAILED: " + seq + " Returned: "
+						+ s.toString();
 				System.err.println(message);
 				failMessages.add(message);
 				failure++;
