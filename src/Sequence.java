@@ -1,5 +1,5 @@
 
-public class Sequence {
+public class Sequence implements Comparable<Sequence>{
 	private long code;
 	private int len;
 
@@ -12,6 +12,11 @@ public class Sequence {
 		}
 		this.len = seq.length();
 		encode(seq);
+	}
+	
+	public Sequence(long code, int len){
+		this.code = code;
+		this.len = len;
 	}
 	
 	private void encode(String seq) throws SequenceException{
@@ -71,6 +76,11 @@ public class Sequence {
 	
 	public String toString(){
 		return decode();
+	}
+
+	@Override
+	public int compareTo(Sequence o) {
+		return this.toString().compareTo(o.toString());
 	}
 	
 	
