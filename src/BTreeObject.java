@@ -1,43 +1,32 @@
-
-public class BTreeObject {
-	public long longkey;
+public class BTreeObject<T extends Comparable<T>> {
+	public T longkey;
 	public int frequency;
-	
-	
-	
-	public BTreeObject(long longkey) {
+
+	public BTreeObject(T longkey) {
 		this.longkey = longkey;
 		this.frequency = 0;
 	}
-	
-	
+
 	public int getFreq() {
 		return frequency;
 	}
-	
-	
+
 	public void incrementFreq() {
 		frequency++;
 	}
-	
-	
-	public long getKey() {
+
+	public T getKey() {
 		return longkey;
 	}
-	
-	
-	
-	
-	
-	public int compareTo(BTreeObject longkey) {
-		if (this.longkey > longkey.getKey()){
-			return 1;
-		}
-		if (this.longkey < longkey.getKey()){
-			return -1;
-		}
-		return 0;
-	}
-	
-	
+
+	// public int compareTo(BTreeObject longkey) {
+	// if (this.longkey > longkey.getKey()){
+	// return 1;
+	// }
+	// if (this.longkey < longkey.getKey()){
+	// return -1;
+	// }
+	// return 0;
+	// }
+
 }
