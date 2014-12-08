@@ -18,6 +18,7 @@ public class SequenceTest {
 
 	private void runTests(int tests) {
 		failMessages = new ArrayList<String>();
+		@SuppressWarnings("unused")
 		Sequence sequence = null;
 		success = 0;
 		failure = 0;
@@ -50,86 +51,36 @@ public class SequenceTest {
 			success++;
 		}
 		sequence = null;
-
+		System.out.println("Running test battery...");
 		String[] base = { "A", "T", "G", "C" };
 		Random rand = new Random(1337);
 		for (int i = 1; i < 32; i++) {
-			String[] seq = new String[i];
+			String[] seq1 = new String[i];
+			String[] seq2 = new String[i];
 			for (int j = 0; j < tests; j++) {
 				for (int ind = 0; ind < i; ind++) {
-					seq[ind] = base[rand.nextInt(4)];
+					seq1[ind] = base[rand.nextInt(4)];
 				}
-				String str = "";
-				for (String s : seq) {
-					str = str + s;
+				String str1 = "";
+				for (String s : seq1) {
+					str1 = str1 + s;
 				}
-				test(str);
+				for (int ind = 0; ind < i; ind++) {
+					seq2[ind] = base[rand.nextInt(4)];
+				}
+				String str2 = "";
+				for (String s : seq2) {
+					str2 = str2 + s;
+				}
+				test(str1);
+				test(str2);
+				test(str1, str2);
+				test(str2, str1);
+				test(str1, str1);
+				test(str2, str2);
 			}
 		}
-		// Exhaustive test would take days to complete.
-		// for (String s : base){
-		// for(String s2 : base){
-		// for(String s3 : base){
-		// for(String s4 : base){
-		// for(String s5 : base){
-		// for(String s6 : base){
-		// for(String s7 : base){
-		// for(String s8 : base){
-		// for(String s9 : base){
-		// for(String s10 : base){
-		// for(String s11 : base){
-		// for(String s12 : base){
-		// for(String s13 : base){
-		// for(String s14 : base){
-		// for(String s15 : base){
-		// for(String s16 : base){
-		// for(String s17 : base){
-		// for(String s18 : base){
-		// for(String s19 : base){
-		// for(String s20 : base){
-		// for(String s21 : base){
-		// for(String s22 : base){
-		// for(String s23 : base){
-		// for(String s24 : base){
-		// for(String s25 : base){
-		// for(String s26 : base){
-		// for(String s27 : base){
-		// for(String s28 : base){
-		// for(String s29 : base){
-		// for(String s30 : base){
-		// for(String s31 : base){
-		// test(s31+s29+s27+s25+s23+s21+s19+s17+s15+s13+s11+s9+s7+s5+s3+s+s2+s4+s6+s8+s10+s12+s14+s16+s18+s20+s22+s24+s26+s28+s30);
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
-		// }
+
 		System.out.println("Total: " + total);
 		System.out.println("Success: " + success);
 		System.out.println("Failure: " + failure);
@@ -138,22 +89,60 @@ public class SequenceTest {
 		}
 	}
 
-	private void test(String seq) {
+	private void test(String str) {
 		total++;
 		try {
-			Sequence s = new Sequence(seq);
-			if (s.toString().equals(seq)) {
-				System.out.println("Passed: " + seq);
+			Sequence seq = new Sequence(str);
+			if (seq.toString().equals(str)) {
+				// System.out.println("Passed: " + str);
 				success++;
 			} else {
-				String message = "\nFAILED: " + seq + " Returned: "
-						+ s.toString();
+				String message = "\nFAILED: " + str + " Returned: "
+						+ seq.toString();
 				System.err.println(message);
 				failMessages.add(message);
 				failure++;
 			}
 		} catch (SequenceException e) {
-			e.printStackTrace();
+			String message = "\nFAILED: " + str + "-- ERROR: " + e.getMessage();
+			System.err.println(message);
+			failMessages.add(message);
+			failure++;
 		}
 	}
+
+	private void test(String str1, String str2) {
+		total++;
+		try {
+			Sequence seq1 = new Sequence(str1);
+			Sequence seq2 = new Sequence(str2);
+			if (!(seq1.toString().equals(str1))
+					|| !(seq2.toString().equals(str2))) {
+				String message = "\nFAILED: " + str1 + " Returned: "
+						+ seq1.toString();
+				System.err.println(message);
+				failMessages.add(message);
+				failure++;
+				return;
+			}
+			if (!(seq1.compareTo(seq2) == str1.compareTo(str2))) {
+				String message = "\nFAILED: " + str1 + " compareTo " + str2
+						+ " Returned: " + seq1.compareTo(seq2) + " Expected: "
+						+ str1.compareTo(str2);
+				System.err.println(message);
+				failMessages.add(message);
+				failure++;
+				return;
+			} else {
+				success++;
+			}
+		} catch (SequenceException e) {
+			String message = "\nFAILED: " + str1 + " and " + str2
+					+ "-- ERROR: " + e.getMessage();
+			System.err.println(message);
+			failMessages.add(message);
+			failure++;
+		}
+	}
+
 }
