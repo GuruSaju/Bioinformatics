@@ -14,7 +14,9 @@ public class Cache<T> {
 
 	private int maxCapacity;
 	private LinkedList<T> cache;
-	private int hits = 0, references = 0;
+
+	private int hits, references;
+
 
 	/**
 	 * Constructor: creates an empty Linked list
@@ -27,6 +29,10 @@ public class Cache<T> {
 		this.maxCapacity = maxCapacity;
 
 		cache = new LinkedList<T>();
+
+		hits = 0;
+		references = 0;
+
 	}
 
 	/**
@@ -137,12 +143,6 @@ public class Cache<T> {
 	public int getReferences() {
 		return references;
 	}
-	
-	public String toString() {
-		String cacheInfo = "";
-		
-		
-		return cacheInfo;
-	}
+
 
 }
