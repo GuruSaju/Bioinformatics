@@ -1,6 +1,10 @@
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.util.Scanner;
+
+import javax.sound.midi.Sequence;
 
 
 public class GeneBankCreateBTree {
@@ -33,23 +37,27 @@ public class GeneBankCreateBTree {
 		int debugLevel = 0;
 		String gbkFileName = args[3];
 		File gbkFile = new File (gbkFileName);
+		BTree<Sequence> btree;
+		Cache<Sequence> cache;
+		BufferedWriter writer;
 		
 		try {
 			if (args.length < 5 || args.length > 7) {
 				System.out.println("Incorrect command line usage.  4, 5, or 6 argments required.\n");
 				printUsage();
 			}
-			
+
 			cacheOption = Integer.parseInt(args[1]);
 			degree = Integer.parseInt(args[2]);
 			seqLength = Integer.parseInt(args[4]);
+			btree = new BTree<Sequence>(degree, seqLength);
 			
-			
-			
+
 			if (cacheOption != 0 && cacheOption != 1) {
 				System.out.println("Cache options must be either 0 or 1.\n");
 				printUsage();				
 			}
+			
 			
 			if (degree == 0) {
 				// calculate optimal degree using formula
@@ -59,12 +67,12 @@ public class GeneBankCreateBTree {
 				printUsage();				
 			}
 			// should we place a max value on degree??
-			
+
 			if (seqLength <= 1 || seqLength > 31) {
 				System.out.println("Sequence length must be an integer value between 1 and 31 (inclusive)\n");
 				printUsage();
 			}
-			
+
 			if (cacheOption == 1) {
 				if (args.length == 5) {
 					System.out.println("Must enter a cache size when cache option is 1.\n");
@@ -72,14 +80,17 @@ public class GeneBankCreateBTree {
 				}
 				else {
 					cacheSize = Integer.parseInt(args[5]);
+					
 					if ( cacheSize < 100 || cacheSize > 500 )	{
 						System.out.println("Cache size must be an integer between 100 and 500 (inclusive)\n");
 						printUsage();
 					}
-					
+
 					if (args.length == 7) {
 						debugLevel = Integer.parseInt(args[6]); 						
 					}
+					
+					cache = new Cache<Sequence>(cacheSize);
 				}
 			}
 			else {
@@ -91,72 +102,93 @@ public class GeneBankCreateBTree {
 					printUsage();
 				}
 			}
-			
+
 			if (debugLevel != 0 && debugLevel != 1) {
 				System.out.println("Debug option must be either 0 or 1.\n");
 				printUsage();				
 			}
 			
+			if (debugLevel == 1) {
+				writer = new BufferedWriter(new FileWriter("dump"));
+			}
+
 			Scanner lineScan = new Scanner(gbkFile);
-			
-			String currentLine = "";
-			String prevLine = "";
-				
+
+			String currentLine = "";			
+
 			while (lineScan.hasNextLine()) {
-								
+				currentLine = lineScan.nextLine();
+
 				while (!currentLine.equals("ORIGIN")) {
 					lineScan.nextLine();				
 				}
-				
+
 				currentLine = lineScan.nextLine();
-				
+
 				StringBuilder build = new StringBuilder();
 				String sequence = "";
-								
-				for ( int i = 0; build.length() <= seqLength; i++) {
+
+				for ( int i = 0; build.length() < seqLength; i++) {
 					char c = currentLine.charAt(i);
-					if (c == 'a' || c == 'c' || c == 'g' || c == 't') {
-						build.append(c);
+					if (c == 'a' || c == 'c' || c == 'g' || c == 't' || c == 'n') {
+						build.append(currentLine.charAt(i));
 					}	
 				}
-				
+
 				sequence = build.toString(); // gives the first valid sequence
-				try {
-					Sequence seqFirst = new Sequence(sequence);
-				} catch (SequenceException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}// add to array or Btree or whatever we decide			
+
 				while (!currentLine.equals("//")) {
-					
 					// get all the sequences
 					for (int i = seqLength; i <= currentLine.length(); i++) {
 						char c = currentLine.charAt(i);
-					if (c == 'a' || c == 'c' || c == 'g' || c == 't') {
-						build.append(c); //hopefully at the end of the line it will hold onto valid chars
-						build.substring(1); //should take off the first letter of the string
-						sequence = build.toString(); //this should happen only with valid dna letters
-						try {
-							Sequence seqContinuous = new Sequence(sequence);
-						} catch (SequenceException e) {
-							// should continuously make Sequence objects with valid strings
-							e.printStackTrace();
+						if (c == 'a' || c == 'c' || c == 'g' || c == 't' || c == 'n') {
+							if (i < currentLine.length()) {
+								build.append(c); //hopefully at the end of the line it will hold onto valid chars
+								build.substring(1); //should take off the first letter of the string
+								sequence = build.toString(); //this should happen only with valid dna letters
+							}
+							else if ( i == currentLine.length() ) {
+								currentLine = lineScan.nextLine();
+								for ( int j = 0; build.length() < seqLength; j++) {
+									c = currentLine.charAt(j);
+									if (c == 'a' || c == 'c' || c == 'g' || c == 't' || c == 'n') {
+										build.append(currentLine.charAt(j));
+										build.substring(1); //should take off the first letter of the string
+										sequence = build.toString(); //this should happen only with valid dna letters
+									}	
+								}								
+							}
+							if (!sequence.contains("n")) {	
+
+								try {
+									Sequence seqContinuous = new Sequence(sequence);
+									btree.insert(seqContinuous);
+									cache.search(seqContinuous); // search method finds and moves 
+																//to front or just adds to front, if full
+																//removes last and adds to front
+									if (debugLevel == 1) {
+										// write to "dump" file.
+									}
+								} catch (SequenceException e) {
+									// should continuously make Sequence objects with valid strings
+									e.printStackTrace();
+								}
+							}
 						}
 					}
-					}
-					
+
 				}
-							
+
 			}
-			
+
 			lineScan.close();
-//			System.out.println(cacheOption);
-//			System.out.println(degree);
-//			System.out.println(gbkFileName);
-//			System.out.println(seqLength);
-//			System.out.println(cacheSize);
-//			System.out.println(debugLevel);			
-			
+			//			System.out.println(cacheOption);
+			//			System.out.println(degree);
+			//			System.out.println(gbkFileName);
+			//			System.out.println(seqLength);
+			//			System.out.println(cacheSize);
+			//			System.out.println(debugLevel);			
+
 		}
 		catch (NumberFormatException e) {
 			System.out.println("\nNumberFormatException:");
@@ -169,7 +201,7 @@ public class GeneBankCreateBTree {
 			System.out.println(e.getMessage());
 			System.exit(1);			
 		}
-		
+
 
 	}
 
