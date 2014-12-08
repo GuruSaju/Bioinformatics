@@ -2,6 +2,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Scanner;
 
 import javax.sound.midi.Sequence;
@@ -37,11 +38,11 @@ public class GeneBankCreateBTree {
 		int debugLevel = 0;
 		String gbkFileName = args[3];
 		File gbkFile = new File (gbkFileName);
-		BTree<Sequence> btree;
+		BTree btree;
 		Cache<Sequence> cache;
+		BufferedWriter btreeFile;
 		BufferedWriter dump;
-		BuggeredWriter bTreeFile;
-		
+
 		try {
 			if (args.length < 5 || args.length > 7) {
 				System.out.println("Incorrect command line usage.  4, 5, or 6 argments required.\n");
@@ -51,15 +52,18 @@ public class GeneBankCreateBTree {
 			cacheOption = Integer.parseInt(args[1]);
 			degree = Integer.parseInt(args[2]);
 			seqLength = Integer.parseInt(args[4]);
-			btree = new BTree<Sequence>(degree, seqLength);
-			
+			btree = new BTree(degree);
+
+			String btreeFileName = gbkFileName + "." + seqLength + "." + degree;
+			btreeFile = new BufferedWriter(new FileWriter(btreeFileName));
+			dump = new BufferedWriter(new FileWriter("dump"));
 
 			if (cacheOption != 0 && cacheOption != 1) {
 				System.out.println("Cache options must be either 0 or 1.\n");
 				printUsage();				
 			}
-			
-			
+
+
 			if (degree == 0) {
 				// calculate optimal degree using formula
 			}
@@ -81,7 +85,7 @@ public class GeneBankCreateBTree {
 				}
 				else {
 					cacheSize = Integer.parseInt(args[5]);
-					
+
 					if ( cacheSize < 100 || cacheSize > 500 )	{
 						System.out.println("Cache size must be an integer between 100 and 500 (inclusive)\n");
 						printUsage();
@@ -90,7 +94,7 @@ public class GeneBankCreateBTree {
 					if (args.length == 7) {
 						debugLevel = Integer.parseInt(args[6]); 						
 					}
-					
+
 					cache = new Cache<Sequence>(cacheSize);
 				}
 			}
@@ -107,11 +111,8 @@ public class GeneBankCreateBTree {
 			if (debugLevel != 0 && debugLevel != 1) {
 				System.out.println("Debug option must be either 0 or 1.\n");
 				printUsage();				
-			}
-			
-			if (debugLevel == 1) {
-				writer = new BufferedWriter(new FileWriter("dump"));
-			}
+			}			
+
 
 			Scanner lineScan = new Scanner(gbkFile);
 
@@ -120,62 +121,136 @@ public class GeneBankCreateBTree {
 			while (lineScan.hasNextLine()) {
 				currentLine = lineScan.nextLine();
 
-				while (!currentLine.equals("ORIGIN")) {
-					lineScan.nextLine();				
-				}
+				while (!currentLine.contains("ORIGIN") && !currentLine.contains("//")) {
+					currentLine = lineScan.nextLine();
 
-				currentLine = lineScan.nextLine();
+				}				
 
 				StringBuilder build = new StringBuilder();
 				String sequence = "";
 
+				currentLine = lineScan.nextLine();
+
+				int linePosition = 0;
+				System.out.println(currentLine);
 				for ( int i = 0; build.length() < seqLength; i++) {
-					char c = currentLine.charAt(i);
+					char c = currentLine.charAt(i);					
 					if (c == 'a' || c == 'c' || c == 'g' || c == 't' || c == 'n') {
-						build.append(currentLine.charAt(i));
-					}	
+						build.append(currentLine.charAt(i));						
+					}
+					linePosition++;
 				}
+				int startPos = linePosition;
+				System.out.print(build.toString() + "\t");
+				//System.out.println(linePostion);
 
 				sequence = build.toString(); // gives the first valid sequence
+				// used for testing
+				int testCount = 1;
+				int seqCount = 0;
 
-				while (!currentLine.equals("//")) {
+				System.out.println(currentLine.length());
+
+				while (!currentLine.contains("//")) {
 					// get all the sequences
-					for (int i = seqLength; i <= currentLine.length(); i++) {
+					for (int i = linePosition; i < currentLine.length(); i++) {
 						char c = currentLine.charAt(i);
 						if (c == 'a' || c == 'c' || c == 'g' || c == 't' || c == 'n') {
-							if (i < currentLine.length()) {
+							if (i < currentLine.length()-1) {
 								build.append(c); //hopefully at the end of the line it will hold onto valid chars
-								build.substring(1); //should take off the first letter of the string
+								build.deleteCharAt(0); //should take off the first letter of the string
 								sequence = build.toString(); //this should happen only with valid dna letters
+
+								//								if (seqCount % 5 == 0) {	
+								//
+								//									btreeFile.write(sequence + "\n");
+								//								}
+								//								else {
+								//									btreeFile.write(sequence + "\t");
+								//								}
+								//								seqCount ++;
+
+								if (testCount <= 800) {
+									if (testCount % 10 == 9) {
+										System.out.println(sequence + "," + i);
+									}
+									else {
+										System.out.print(sequence + "," + i + "\t");
+									}
+									testCount ++;
+								}
+
 							}
-							else if ( i == currentLine.length() ) {
-								currentLine = lineScan.nextLine();
-								for ( int j = 0; build.length() < seqLength; j++) {
+							else if ( i == currentLine.length()-1 ) {
+								build.append(c); //hopefully at the end of the line it will hold onto valid chars
+								build.deleteCharAt(0); //should take off the first letter of the string
+								sequence = build.toString(); //this should happen only with valid dna letters
+								System.out.println(sequence + "," + i);
+								testCount ++;
+
+								currentLine = lineScan.nextLine();								
+
+								int pos = 0;
+								c = currentLine.charAt(pos);
+								while (!(c == 'a' || c == 'c' || c == 'g' || c == 't' || c == 'n')) {
+									if (c != '/') {
+										pos++;
+										c = currentLine.charAt(pos);
+									}
+									else return;
+								}
+								for ( int j = pos; j < pos + seqLength; j++) {
 									c = currentLine.charAt(j);
+									//System.out.println(c);
 									if (c == 'a' || c == 'c' || c == 'g' || c == 't' || c == 'n') {
 										build.append(currentLine.charAt(j));
-										build.substring(1); //should take off the first letter of the string
+										build.deleteCharAt(0); //should take off the first letter of the string
 										sequence = build.toString(); //this should happen only with valid dna letters
-									}	
-								}								
-							}
-							if (!sequence.contains("n")) {	
 
-								try {
-									Sequence seqContinuous = new Sequence(sequence);
-									btree.insert(seqContinuous);
-									cache.search(seqContinuous); // search method finds and moves 
-																//to front or just adds to front, if full
-																//removes last and adds to front
-									if (debugLevel == 1) {
-										// write to "dump" file.
-									}
-								} catch (SequenceException e) {
-									// should continuously make Sequence objects with valid strings
-									e.printStackTrace();
+										//										if (seqCount % 5 == 0) {	
+										//
+										//											btreeFile.write(sequence + "\n");
+										//										}
+										//										else {
+										//											btreeFile.write(sequence + "\t");
+										//										}
+										//										seqCount ++;
+
+
+										if (testCount <= 800) {	
+											if (testCount % 10 == 0) {
+												System.out.println(sequence + "," + j);
+											}
+											else {
+												System.out.print(sequence + "," + j + "\t");
+											}
+											testCount ++;
+										}										
+									}	
 								}
+								linePosition = startPos;
 							}
+
+							//if (!sequence.contains("n")) {	
+
+
+
+							//								try {
+							//									Sequence seqContinuous = new Sequence(sequence);
+							//									btree.insert(seqContinuous);
+							//									cache.search(seqContinuous); // search method finds and moves 
+							//																//to front or just adds to front, if full
+							//																//removes last and adds to front
+							//									if (debugLevel == 1) {
+							//										// write to "dump" file.
+							//									}
+							//								} catch (SequenceException e) {
+							//									// should continuously make Sequence objects with valid strings
+							//									e.printStackTrace();
+							//								}
+							//}
 						}
+
 					}
 
 				}
@@ -183,6 +258,8 @@ public class GeneBankCreateBTree {
 			}
 
 			lineScan.close();
+			dump.close();
+			btreeFile.close();
 			//			System.out.println(cacheOption);
 			//			System.out.println(degree);
 			//			System.out.println(gbkFileName);
@@ -201,6 +278,10 @@ public class GeneBankCreateBTree {
 					+ "\" could not be opened. Check spelling or pathname");
 			System.out.println(e.getMessage());
 			System.exit(1);			
+		}
+		catch (IOException e) {
+			System.out.println("Something is wrong with the buffered writer");
+			System.exit(1);
 		}
 
 
